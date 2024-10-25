@@ -21,6 +21,14 @@ type Config struct {
 	EigenDARegistryCoordinatorAddress common.Address
 	EigenDAServiceManagerAddress      common.Address
 
+	// EOracle
+	EOracleRegistryCoordinatorAddress common.Address
+	EOracleServiceManagerAddress      common.Address
+
+	// Hyperlane
+	HyperlaneStakeRegistryAddress  common.Address
+	HyperlaneServiceManagerAddress common.Address
+
 	SignMessageLibAddress common.Address
 }
 
@@ -33,6 +41,12 @@ var Mainnet = Config{
 	EigenDARegistryCoordinatorAddress: common.HexToAddress("0x0BAAc79acD45A023E19345c352d8a7a83C4e5656"),
 	EigenDAServiceManagerAddress:      common.HexToAddress("0x870679E138bCdf293b7Ff14dD44b70FC97e12fc0"),
 
+	EOracleRegistryCoordinatorAddress: common.HexToAddress("0x757E6f572AfD8E111bD913d35314B5472C051cA8"),
+	EOracleServiceManagerAddress:      common.HexToAddress("0x23221c5bB90C7c57ecc1E75513e2E4257673F0ef"),
+
+	HyperlaneStakeRegistryAddress:  common.HexToAddress("0x272CF0BB70D3B4f79414E0823B426d2EaFd48910"),
+	HyperlaneServiceManagerAddress: common.HexToAddress("0xe8E59c6C8B56F2c178f63BCFC4ce5e5e2359c8fc"),
+
 	SignMessageLibAddress: common.HexToAddress("0xA65387F16B013cf2Af4605Ad8aA5ec25a2cbA3a2"),
 }
 
@@ -44,6 +58,12 @@ var Holesky = Config{
 
 	EigenDARegistryCoordinatorAddress: common.HexToAddress("0x53012C69A189cfA2D9d29eb6F19B32e0A2EA3490"),
 	EigenDAServiceManagerAddress:      common.HexToAddress("0xD4A7E1Bd8015057293f0D0A557088c286942e84b"),
+
+	EOracleRegistryCoordinatorAddress: common.HexToAddress("0xc4A6E362e8Bd89F28Eb405F9Aa533784884B9c4F"),
+	EOracleServiceManagerAddress:      common.HexToAddress("0x80FE337623Bc849F4b7379f4AB28aF2b470bEa98"),
+
+	HyperlaneStakeRegistryAddress:  common.HexToAddress("0xFfa913705484C9BAea32Ffe9945BeA099A1DFF72"),
+	HyperlaneServiceManagerAddress: common.HexToAddress("0xc76E477437065093D353b7d56c81ff54D167B0Ab"),
 
 	SignMessageLibAddress: common.HexToAddress("0xA65387F16B013cf2Af4605Ad8aA5ec25a2cbA3a2"),
 }
