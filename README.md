@@ -26,6 +26,8 @@ make build
 ## Step 2: Follow the instructions for the specific AVS you are registering for
 
 * [EigenDA](https://github.com/mantle-lsp/mantle-avs-operator-CLI?tab=readme-ov-file#eigenda)
+* [eOracle](https://github.com/mantle-lsp/mantle-avs-operator-CLI?tab=readme-ov-file#eoracle)
+
 ---
 
 # EigenDA
@@ -42,7 +44,7 @@ make build
 5. Wait for confirmation from the mantle team that your registration is complete
 6. Proceed to run the eigenDA node software
 
-## Admin Flow
+## Mantle Admin Flow
 
 1. Receive prepared registration json file from target node operator
 2. Register the operator contract with eigenda
@@ -50,3 +52,30 @@ make build
            ./avs-cli eigenda register --registration-input eigenda-input.json
 
            // submit resulting output as a gnosis TX via AVS admin gnosis
+
+---
+
+# eOracle
+
+## Operator Flow
+
+1. generate and encrypt a new BLS keystore using the eOracle tooling https://eoracle.gitbook.io/eoracle/operators/registration#generate-a-bls-pair-recommended
+2. generate a new ECDSA key pair to serve as your `aliasAddress`
+3. Sign digest establishing ownership of your newly generated BLS key
+
+           ./avs-cli eoracle prepare-registration --operator-address {operator_address} --bls-keystore {path_to_keystore} --bls-password {keystore_password} --alias-address {alias_address}
+
+4. Send the result of the previous command to the mantle team 
+5. Wait for confirmation from the mantle team that your registration is complete
+6. Proceed to run the eoracle node software
+
+## Mantle Admin Flow
+
+1. Receive prepared registration json file from target node operator
+2. Register the operator contract with eoracle
+
+           ./avs-cli eoracle register --registration-input eoracle-input.json
+
+           // submit resulting output as a gnosis TX via AVS admin gnosis
+
+3. Ask the eOracle team to manually set the alias address from the input to be associated with the target operator
