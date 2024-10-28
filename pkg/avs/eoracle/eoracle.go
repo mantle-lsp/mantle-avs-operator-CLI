@@ -1,4 +1,4 @@
-package eigenda
+package eoracle
 
 import (
 	"context"
@@ -16,29 +16,30 @@ import (
 	"github.com/mantle-lsp/mantle-avs-operator-CLI/pkg/types"
 	"github.com/mantle-lsp/mantle-avs-operator-CLI/pkg/utils"
 
-	registryCoordinator "github.com/Layr-Labs/eigenda/contracts/bindings/RegistryCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+
+	registryCoordinator "github.com/Eoracle/core-go/contracts/bindings/EORegistryCoordinator"
 )
 
-type EigenDA struct {
+type EOracle struct {
 	Client                     *ethclient.Client
 	RegistryCoordinatorAddress common.Address
-	RegistryCoordinator        *registryCoordinator.ContractRegistryCoordinator
+	RegistryCoordinator        *registryCoordinator.ContractEORegistryCoordinator
 	ServiceManagerAddress      common.Address
 
 	EigenLayer *eigenlayer.EigenLayer
 	SafeGlobal *gnosis.SafeGlobal
 }
 
-func New(cfg config.Config, rpcClient *ethclient.Client) *EigenDA {
+func New(cfg config.Config, rpcClient *ethclient.Client) *EOracle {
 
-	registryCoordinator, _ := registryCoordinator.NewContractRegistryCoordinator(cfg.EigenDARegistryCoordinatorAddress, rpcClient)
+	registryCoordinator, _ := registryCoordinator.NewContractEORegistryCoordinator(cfg.EOracleRegistryCoordinatorAddress, rpcClient)
 
-	return &EigenDA{
+	return &EOracle{
 		Client:                     rpcClient,
 		RegistryCoordinator:        registryCoordinator,
-		RegistryCoordinatorAddress: cfg.EigenDARegistryCoordinatorAddress,
-		ServiceManagerAddress:      cfg.EigenDAServiceManagerAddress,
+		RegistryCoordinatorAddress: cfg.EOracleRegistryCoordinatorAddress,
+		ServiceManagerAddress:      cfg.EOracleServiceManagerAddress,
 		EigenLayer:                 eigenlayer.New(cfg, rpcClient),
 		SafeGlobal:                 gnosis.New(cfg, rpcClient),
 	}
@@ -47,12 +48,12 @@ func New(cfg config.Config, rpcClient *ethclient.Client) *EigenDA {
 // Info that node operator must supply to the mantle admin for registration
 type RegistrationInfo struct {
 	Operator                    common.Address
-	Socket                      string
-	Quorums                     []int64
 	BLSPubkeyRegistrationParams *types.BLSPubkeyRegistrationParams
+	Quorums                     []int64
+	AliasAddress                common.Address
 }
 
-func (a *EigenDA) PrepareRegistration(operator common.Address, blsKey *bls.KeyPair, socket string, quorums []int64) error {
+func (a *EOracle) PrepareRegistration(operator common.Address, blsKey *bls.KeyPair, quorums []int64, alias common.Address) error {
 	// compute hash to sign with bls key
 	// the hash is converted to a G1 point on the curve before it is returned
 	g1Point, err := a.RegistryCoordinator.PubkeyRegistrationMessageHash(nil, operator)
@@ -73,14 +74,14 @@ func (a *EigenDA) PrepareRegistration(operator common.Address, blsKey *bls.KeyPa
 
 	ri := RegistrationInfo{
 		Operator:                    operator,
-		Socket:                      socket,
-		Quorums:                     quorums,
 		BLSPubkeyRegistrationParams: signedParams,
+		Quorums:                     quorums,
+		AliasAddress:                alias,
 	}
-	return utils.ExportJSON("eigenda-prepare-registration", operator, ri)
+	return utils.ExportJSON("eoracle-prepare-registration", operator, ri)
 }
 
-func (a *EigenDA) RegisterOperator(operator common.Address, info RegistrationInfo) error {
+func (a *EOracle) RegisterOperator(operator common.Address, info RegistrationInfo) error {
 
 	// generate and sign registration hash to be signed by admin ecdsa key
 	sigWithSaltAndExpiry, err := a.EigenLayer.GenerateAndSignRegistrationDigest(operator, a.ServiceManagerAddress)
@@ -99,19 +100,20 @@ func (a *EigenDA) RegisterOperator(operator common.Address, info RegistrationInf
 		Salt:      sigWithSaltAndExpiry.Salt,
 		Expiry:    sigWithSaltAndExpiry.Expiry,
 	}
-	pubkeyParams := registryCoordinator.IBLSApkRegistryPubkeyRegistrationParams{
+	pubkeyParams := registryCoordinator.IEOBLSApkRegistryPubkeyRegistrationParams{
 		PubkeyRegistrationSignature: registryCoordinator.BN254G1Point(info.BLSPubkeyRegistrationParams.Signature),
+		ChainValidatorSignature:     registryCoordinator.BN254G1Point{X: big.NewInt(0), Y: big.NewInt(0)}, // not currently used by protocol
 		PubkeyG1:                    registryCoordinator.BN254G1Point(info.BLSPubkeyRegistrationParams.G1),
 		PubkeyG2:                    registryCoordinator.BN254G2Point(info.BLSPubkeyRegistrationParams.G2),
 	}
 
 	// manually pack tx data since we are submitting via gnosis instead of directly
-	coordinatorABI, err := registryCoordinator.ContractRegistryCoordinatorMetaData.GetAbi()
+	coordinatorABI, err := registryCoordinator.ContractEORegistryCoordinatorMetaData.GetAbi()
 	if err != nil {
 		return fmt.Errorf("fetching abi: %w", err)
 	}
 
-	calldata, err := coordinatorABI.Pack("registerOperator", quorums, info.Socket, pubkeyParams, sigParams)
+	calldata, err := coordinatorABI.Pack("registerOperator", quorums, pubkeyParams, sigParams)
 	if err != nil {
 		return fmt.Errorf("packing input: %w", err)
 	}
@@ -129,7 +131,7 @@ func (a *EigenDA) RegisterOperator(operator common.Address, info RegistrationInf
 	chainID, _ := a.Client.ChainID(context.Background())
 
 	// output in gnosis compatible format
-	batch := gnosis.NewSingleTxBatch(calldata, chainID, fmt.Sprintf("eigenda-register-operator-%s", operator))
+	batch := gnosis.NewSingleTxBatch(calldata, chainID, fmt.Sprintf("eoracle-register-operator-%s", operator))
 
 	batch.AddTransaction(gnosis.SubTransaction{
 		Target: a.SafeGlobal.SignMessageLibAddress,
@@ -143,5 +145,5 @@ func (a *EigenDA) RegisterOperator(operator common.Address, info RegistrationInf
 		Data:   calldata,
 	})
 
-	return utils.ExportJSON("eigenda-register-gnosis", operator, batch)
+	return utils.ExportJSON("eoracle-register-gnosis", operator, batch)
 }

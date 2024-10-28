@@ -2,7 +2,10 @@ module github.com/mantle-lsp/mantle-avs-operator-CLI
 
 go 1.22.0
 
+replace github.com/Eoracle/core-go v0.0.12 => github.com/Eoracle/Eoracle-operator-cli v0.0.12
+
 require (
+	github.com/Eoracle/core-go v0.0.12
 	github.com/Layr-Labs/eigenda v0.8.2
 	github.com/Layr-Labs/eigenlayer-contracts v0.4.2-mainnet-pepe
 	github.com/Layr-Labs/eigensdk-go v0.1.10

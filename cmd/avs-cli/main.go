@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/mantle-lsp/mantle-avs-operator-CLI/cmd/avs-cli/eigenda"
+	"github.com/mantle-lsp/mantle-avs-operator-CLI/cmd/avs-cli/eoracle"
+	"github.com/mantle-lsp/mantle-avs-operator-CLI/cmd/avs-cli/hyperlane"
 
 	"github.com/urfave/cli/v3"
 )
@@ -24,6 +26,8 @@ func main() {
 		Commands: []*cli.Command{
 			// AVS specific commands
 			eigenda.EigenDACmd,
+			eoracle.EOracleCmd,
+			hyperlane.HyperlaneCmd,
 		},
 	}
 
